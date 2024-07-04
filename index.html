@@ -114,6 +114,13 @@
                 searchCities(query);
             });
 
+            searchField.on('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    const query = event.target.value;
+                    searchCities(query);
+                }
+            });
+
             citySelect.on('select2:select', (event) => {
                 const selectedCity = JSON.parse(event.params.data.id);
                 if (selectedCity) {
