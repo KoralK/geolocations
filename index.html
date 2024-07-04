@@ -24,22 +24,15 @@
             margin: 20px;
             text-align: center;
         }
+        #searchField {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
         #citySelect {
             width: 100%;
             margin-top: 10px;
-        }
-        #loadMore {
-            margin: 10px 0;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        #loadMore:disabled {
-            background-color: #ddd;
-            cursor: not-allowed;
         }
         #infoMessage {
             margin: 10px 0;
@@ -56,10 +49,10 @@
 <body>
     <h1>Select a City to See its Coordinates</h1>
     <div id="controls">
-        <div id="loading">Loading cities...</div>
+        <input type="text" id="searchField" placeholder="Type to search for a city...">
         <select id="citySelect"></select>
-        <button id="loadMore">Load More</button>
-        <div id="infoMessage">If you can't find the city you're looking for, click "Load More" until you see the city.</div>
+        <div id="infoMessage">Start typing to search for a city.</div>
+        <div id="loading">Loading cities...</div>
     </div>
     <div id="map"></div>
 
@@ -69,40 +62,39 @@
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
             const citySelect = $('#citySelect');
-            const loadMoreButton = document.getElementById('loadMore');
-            const loadingIndicator = document.getElementById('loading');
+            const searchField = $('#searchField');
+            const loadingIndicator = $('#loading');
             const map = L.map('map').setView([0, 0], 2);
-            let currentPage = 1;
-            const limit = 100;  // Set a reasonable limit for each request
-            let isLoading = false;
+            let timeout = null;
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
 
-            function fetchCities(page) {
-                if (isLoading) return;
-                isLoading = true;
-                loadingIndicator.style.display = 'block';
-                fetch(`https://geolocationsapi-koralks-projects.vercel.app/api/cities?page=${page}&limit=${limit}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        populateCitySelect(data.data);
-                        if (data.page >= data.totalPages) {
-                            loadMoreButton.disabled = true;
-                            loadMoreButton.textContent = 'No More Cities';
-                        }
-                        isLoading = false;
-                        loadingIndicator.style.display = 'none';
-                    })
-                    .catch(error => {
-                        console.error('Error fetching cities:', error);
-                        isLoading = false;
-                        loadingIndicator.style.display = 'none';
-                    });
+            function searchCities(query) {
+                if (timeout) clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    if (!query) {
+                        citySelect.empty();
+                        return;
+                    }
+
+                    loadingIndicator.show();
+                    fetch(`https://geolocationsapi-koralks-projects.vercel.app/api/cities?name=${query}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            populateCitySelect(data.data);
+                            loadingIndicator.hide();
+                        })
+                        .catch(error => {
+                            console.error('Error fetching cities:', error);
+                            loadingIndicator.hide();
+                        });
+                }, 500);
             }
 
             function populateCitySelect(cities) {
+                citySelect.empty();
                 cities.sort((a, b) => a.name.localeCompare(b.name));
                 cities.forEach(city => {
                     const option = new Option(city.name, JSON.stringify({ lat: city.lat, lng: city.lng }), false, false);
@@ -117,8 +109,9 @@
                 allowClear: true
             });
 
-            loadMoreButton.addEventListener('click', () => {
-                fetchCities(++currentPage);
+            searchField.on('input', (event) => {
+                const query = event.target.value;
+                searchCities(query);
             });
 
             citySelect.on('select2:select', (event) => {
@@ -130,9 +123,6 @@
                         .openPopup();
                 }
             });
-
-            // Initial fetch
-            fetchCities(currentPage);
         });
     </script>
 </body>
