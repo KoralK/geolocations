@@ -134,6 +134,16 @@
 
             // Initial fetch
             searchCities('');
+
+            // Debug initial data load
+            fetch('https://geolocationsapi-koralks-projects.vercel.app/api/cities?page=1&limit=10')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Initial Data:', data);
+                })
+                .catch(error => {
+                    console.error('Error fetching initial data:', error);
+                });
         });
     </script>
 </body>
