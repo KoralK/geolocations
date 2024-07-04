@@ -28,32 +28,24 @@
             width: 100%;
             margin-top: 10px;
         }
-        #loadMore {
-            margin: 10px 0;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        #loadMore:disabled {
-            background-color: #ddd;
-            cursor: not-allowed;
-        }
         #infoMessage {
             margin: 10px 0;
             font-size: 14px;
             color: #555;
+        }
+        #loading {
+            display: none;
+            font-size: 16px;
+            color: #007bff;
         }
     </style>
 </head>
 <body>
     <h1>Select a City to See its Coordinates</h1>
     <div id="controls">
-        <button id="loadMore">Load More</button>
+        <div id="loading">Loading cities...</div>
         <select id="citySelect"></select>
-        <div id="infoMessage">If you can't find the city you're looking for, click "Load More" until you see the city.</div>
+        <div id="infoMessage">All cities are loaded. Use the search box to find your city.</div>
     </div>
     <div id="map"></div>
 
@@ -63,34 +55,24 @@
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
             const citySelect = $('#citySelect');
-            const loadMoreButton = document.getElementById('loadMore');
+            const loadingIndicator = document.getElementById('loading');
             const map = L.map('map').setView([0, 0], 2);
-            let currentPage = 1;
-            const limit = 1000;  // Further increase limit to load more cities initially
-            let isLoading = false;
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
 
-            function fetchCities(page) {
-                if (isLoading) return;
-                isLoading = true;
-                console.log(`Fetching page ${page} with limit ${limit}`);
-                fetch(`https://geolocationsapi-koralks-projects.vercel.app/api/cities?page=${page}&limit=${limit}`)
+            function fetchAllCities() {
+                loadingIndicator.style.display = 'block';
+                fetch(`https://geolocationsapi-koralks-projects.vercel.app/api/cities?page=1&limit=209359`) // Fetch all cities in one go
                     .then(response => response.json())
                     .then(data => {
-                        console.log(`Fetched ${data.data.length} cities from page ${page}`);
                         populateCitySelect(data.data);
-                        if (data.page >= data.totalPages) {
-                            loadMoreButton.disabled = true;
-                            loadMoreButton.textContent = 'No More Cities';
-                        }
-                        isLoading = false;
+                        loadingIndicator.style.display = 'none';
                     })
                     .catch(error => {
                         console.error('Error fetching cities:', error);
-                        isLoading = false;
+                        loadingIndicator.textContent = 'Error loading cities';
                     });
             }
 
@@ -109,10 +91,6 @@
                 allowClear: true
             });
 
-            loadMoreButton.addEventListener('click', () => {
-                fetchCities(++currentPage);
-            });
-
             citySelect.on('select2:select', (event) => {
                 const selectedCity = JSON.parse(event.params.data.id);
                 if (selectedCity) {
@@ -124,7 +102,7 @@
             });
 
             // Initial fetch
-            fetchCities(currentPage);
+            fetchAllCities();
         });
     </script>
 </body>
