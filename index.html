@@ -66,7 +66,7 @@
             const loadMoreButton = document.getElementById('loadMore');
             const map = L.map('map').setView([0, 0], 2);
             let currentPage = 1;
-            const limit = 100;
+            const limit = 500;  // Increase limit to load more cities initially
             let isLoading = false;
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
