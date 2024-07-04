@@ -21,6 +21,19 @@
         #citySelect {
             margin: 20px;
         }
+        #loadMore {
+            margin: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #loadMore:disabled {
+            background-color: #ddd;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -28,30 +41,52 @@
     <select id="citySelect">
         <option value="">Select a city...</option>
     </select>
+    <button id="loadMore">Load More</button>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
             const citySelect = document.getElementById('citySelect');
+            const loadMoreButton = document.getElementById('loadMore');
             const map = L.map('map').setView([0, 0], 2);
+            let currentPage = 1;
+            const limit = 100;
+            let isLoading = false;
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
 
-            fetchCities(1);
+            function debounce(fn, delay) {
+                let timeoutID;
+                return function (...args) {
+                    if (timeoutID) {
+                        clearTimeout(timeoutID);
+                    }
+                    timeoutID = setTimeout(() => {
+                        fn(...args);
+                    }, delay);
+                };
+            }
 
             function fetchCities(page) {
-                fetch(`https://geolocationsapi-koralks-projects.vercel.app/api/cities?page=${page}&limit=100`)
+                if (isLoading) return;
+                isLoading = true;
+                fetch(`https://geolocationsapi-koralks-projects.vercel.app/api/cities?page=${page}&limit=${limit}`)
                     .then(response => response.json())
                     .then(data => {
                         populateCitySelect(data.data);
-                        if (data.page < data.totalPages) {
-                            fetchCities(page + 1);
+                        if (data.page >= data.totalPages) {
+                            loadMoreButton.disabled = true;
+                            loadMoreButton.textContent = 'No More Cities';
                         }
+                        isLoading = false;
                     })
-                    .catch(error => console.error('Error fetching cities:', error));
+                    .catch(error => {
+                        console.error('Error fetching cities:', error);
+                        isLoading = false;
+                    });
             }
 
             function populateCitySelect(cities) {
@@ -63,6 +98,10 @@
                 });
             }
 
+            loadMoreButton.addEventListener('click', () => {
+                fetchCities(++currentPage);
+            });
+
             citySelect.addEventListener('change', (event) => {
                 const selectedCity = JSON.parse(event.target.value);
                 if (selectedCity) {
@@ -72,6 +111,9 @@
                         .openPopup();
                 }
             });
+
+            // Initial fetch
+            fetchCities(currentPage);
         });
     </script>
 </body>
