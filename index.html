@@ -19,12 +19,17 @@
             flex-direction: column;
             align-items: center;
         }
-        #citySelect {
+        #controls {
             width: 50%;
             margin: 20px;
+            text-align: center;
+        }
+        #citySelect {
+            width: 100%;
+            margin-top: 10px;
         }
         #loadMore {
-            margin: 20px;
+            margin: 10px 0;
             padding: 10px 20px;
             background-color: #007bff;
             color: white;
@@ -36,12 +41,20 @@
             background-color: #ddd;
             cursor: not-allowed;
         }
+        #infoMessage {
+            margin: 10px 0;
+            font-size: 14px;
+            color: #555;
+        }
     </style>
 </head>
 <body>
     <h1>Select a City to See its Coordinates</h1>
-    <select id="citySelect"></select>
-    <button id="loadMore">Load More</button>
+    <div id="controls">
+        <button id="loadMore">Load More</button>
+        <select id="citySelect"></select>
+        <div id="infoMessage">If you can't find the city you're looking for, click "Load More" until you see the city.</div>
+    </div>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
