@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Management</title>
+</head>
+<body>
+    <h1>City Management</h1>
+    <form id="addCityForm">
+        <input type="text" id="cityName" placeholder="City Name" required>
+        <input type="number" step="any" id="cityLat" placeholder="Latitude" required>
+        <input type="number" step="any" id="cityLng" placeholder="Longitude" required>
+        <button type="submit">Add City</button>
+    </form>
+    <h2>Cities</h2>
+    <ul id="cityList"></ul>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const form = document.getElementById('addCityForm');
+            const cityList = document.getElementById('cityList');
+
+            function loadCities() {
+                const cities = JSON.parse(localStorage.getItem('cities')) || [];
+                cityList.innerHTML = '';
+                cities.forEach((city, index) => {
+                    const li = document.createElement('li');
+                    li.textContent = `${city.name} (Lat: ${city.lat}, Lng: ${city.lng})`;
+                    cityList.appendChild(li);
+                });
+            }
+
+            function fetchInitialCities() {
+                fetch('cities.json')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!localStorage.getItem('cities')) {
+                            localStorage.setItem('cities', JSON.stringify(data));
+                        }
+                        loadCities();
+                    })
+                    .catch(error => console.error('Error fetching initial cities:', error));
+            }
+
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const name = document.getElementById('cityName').value;
+                const lat = parseFloat(document.getElementById('cityLat').value);
+                const lng = parseFloat(document.getElementById('cityLng').value);
+                const cities = JSON.parse(localStorage.getItem('cities')) || [];
+                cities.push({ name, lat, lng });
+                localStorage.setItem('cities', JSON.stringify(cities));
+                loadCities();
+                form.reset();
+            });
+
+            fetchInitialCities();
+        });
+    </script>
+</body>
+</html>
