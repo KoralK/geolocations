@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>City Coordinates Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         #map {
             height: 600px;
@@ -19,6 +20,7 @@
             align-items: center;
         }
         #citySelect {
+            width: 50%;
             margin: 20px;
         }
         #loadMore {
@@ -38,16 +40,16 @@
 </head>
 <body>
     <h1>Select a City to See its Coordinates</h1>
-    <select id="citySelect">
-        <option value="">Select a city...</option>
-    </select>
+    <select id="citySelect"></select>
     <button id="loadMore">Load More</button>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
-            const citySelect = document.getElementById('citySelect');
+            const citySelect = $('#citySelect');
             const loadMoreButton = document.getElementById('loadMore');
             const map = L.map('map').setView([0, 0], 2);
             let currentPage = 1;
@@ -57,18 +59,6 @@
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
-
-            function debounce(fn, delay) {
-                let timeoutID;
-                return function (...args) {
-                    if (timeoutID) {
-                        clearTimeout(timeoutID);
-                    }
-                    timeoutID = setTimeout(() => {
-                        fn(...args);
-                    }, delay);
-                };
-            }
 
             function fetchCities(page) {
                 if (isLoading) return;
@@ -90,24 +80,29 @@
             }
 
             function populateCitySelect(cities) {
+                cities.sort((a, b) => a.name.localeCompare(b.name));
                 cities.forEach(city => {
-                    const option = document.createElement('option');
-                    option.value = JSON.stringify({ lat: city.lat, lng: city.lng });
-                    option.textContent = city.name;
-                    citySelect.appendChild(option);
+                    const option = new Option(city.name, JSON.stringify({ lat: city.lat, lng: city.lng }), false, false);
+                    citySelect.append(option);
                 });
+                citySelect.trigger('change'); // Refresh the Select2 dropdown
             }
+
+            citySelect.select2({
+                placeholder: 'Select a city...',
+                allowClear: true
+            });
 
             loadMoreButton.addEventListener('click', () => {
                 fetchCities(++currentPage);
             });
 
-            citySelect.addEventListener('change', (event) => {
-                const selectedCity = JSON.parse(event.target.value);
+            citySelect.on('select2:select', (event) => {
+                const selectedCity = JSON.parse(event.params.data.id);
                 if (selectedCity) {
                     map.setView([selectedCity.lat, selectedCity.lng], 10);
                     L.marker([selectedCity.lat, selectedCity.lng]).addTo(map)
-                        .bindPopup(`<b>${event.target.options[event.target.selectedIndex].text}</b><br>Lat: ${selectedCity.lat}, Lng: ${selectedCity.lng}`)
+                        .bindPopup(`<b>${event.params.data.text}</b><br>Lat: ${selectedCity.lat}, Lng: ${selectedCity.lng}`)
                         .openPopup();
                 }
             });
