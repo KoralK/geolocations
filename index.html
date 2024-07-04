@@ -123,6 +123,7 @@
 
             citySelect.on('select2:select', (event) => {
                 const selectedCity = JSON.parse(event.params.data.id);
+                console.log('Selected City:', selectedCity); // Log selected city and its coordinates
                 if (selectedCity) {
                     map.setView([selectedCity.lat, selectedCity.lng], 10);
                     L.marker([selectedCity.lat, selectedCity.lng]).addTo(map)
