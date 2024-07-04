@@ -76,9 +76,11 @@
             function fetchCities(page) {
                 if (isLoading) return;
                 isLoading = true;
+                console.log(`Fetching page ${page} with limit ${limit}`);
                 fetch(`https://geolocationsapi-koralks-projects.vercel.app/api/cities?page=${page}&limit=${limit}`)
                     .then(response => response.json())
                     .then(data => {
+                        console.log(`Fetched ${data.data.length} cities from page ${page}`);
                         populateCitySelect(data.data);
                         if (data.page >= data.totalPages) {
                             loadMoreButton.disabled = true;
@@ -99,6 +101,7 @@
                     citySelect.append(option);
                 });
                 citySelect.trigger('change'); // Refresh the Select2 dropdown
+                console.log('Dropdown populated with cities');
             }
 
             citySelect.select2({
